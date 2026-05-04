@@ -3,49 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI电子族谱 - 温暖传承</title>
+    <title>AI电子族谱 - 云端同步版</title>
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- 引入 Supabase 官方库 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --paper: #FFF9F1;
-            --wood: #5D4037;
-            --gold: #D4AF37;
-            --ink: #2C1810;
-        }
-
+        :root { --paper: #FFF9F1; --wood: #5D4037; --gold: #D4AF37; --ink: #2C1810; }
         body { background-color: #f1ede4; margin: 0; padding: 0; font-family: 'Noto Serif SC', serif; display: flex; justify-content: center; }
         .mobile-container { width: 100%; max-width: 450px; min-height: 100vh; background-color: var(--paper); box-shadow: 0 0 20px rgba(0,0,0,0.1); position: relative; padding-bottom: 80px; }
         .top-bar { height: 10px; background: linear-gradient(90deg, var(--gold), #f9e3a3, var(--gold)); }
-        
-        /* 个人档案头部 */
         .profile-header { text-align: center; padding: 40px 20px; background: radial-gradient(circle at top, #fffdfa, var(--paper)); }
-        .avatar-container { width: 150px; height: 150px; margin: 0 auto 20px; border-radius: 50%; border: 4px solid var(--gold); padding: 5px; background: white; overflow: hidden; position: relative; cursor: pointer; }
+        .avatar-container { width: 150px; height: 150px; margin: 0 auto 20px; border-radius: 50%; border: 4px solid var(--gold); padding: 5px; background: white; overflow: hidden; position: relative; }
         #profile-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-        .edit-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); color: white; display: none; align-items: center; justify-content: center; font-size: 12px; }
-        
         h1 { font-family: 'Ma Shan Zheng', cursive; font-size: 38px; margin: 10px 0; color: var(--ink); }
         .years { font-size: 16px; color: var(--gold); letter-spacing: 2px; margin-bottom: 20px; }
-
-        /* 选项卡与内容 */
         .tabs { display: flex; border-bottom: 1px solid var(--gold); margin: 0 20px; }
         .tab { flex: 1; padding: 10px; text-align: center; font-size: 14px; color: #888; cursor: pointer; }
         .tab.active { color: var(--wood); font-weight: bold; border-bottom: 3px solid var(--gold); }
         .content-section { padding: 25px; line-height: 1.8; color: var(--wood); min-height: 150px; }
-
         .editable { border: 1px dashed transparent; padding: 5px; transition: 0.3s; outline: none; }
         .edit-mode .editable { border-color: var(--gold); background: #fffdf0; }
-
-        /* 底部导航 */
         .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 450px; background: var(--wood); display: flex; justify-content: space-around; padding: 15px 0; z-index: 100; }
-        .nav-btn { color: #d7ccc8; text-align: center; font-size: 12px; cursor: pointer; text-decoration: none; }
+        .nav-btn { color: #d7ccc8; text-align: center; font-size: 12px; cursor: pointer; }
         .nav-btn i { font-size: 20px; margin-bottom: 5px; display: block; }
         .nav-btn.admin { color: var(--gold); }
-        
-        #file-input { display: none; }
-        
-        /* 报错提示样式 */
-        .error-msg { text-align: center; padding: 50px; color: #888; }
+        #loading { text-align: center; padding: 50px; color: var(--wood); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -53,18 +36,17 @@
 <div class="mobile-container" id="app">
     <div class="top-bar"></div>
 
-    <!-- 成员内容区域 -->
-    <div id="member-content">
+    <div id="loading">正在从云端读取家族记忆...</div>
+
+    <div id="member-content" style="display: none;">
         <div class="profile-header">
-            <div class="avatar-container" onclick="triggerUpload()">
-                <img id="profile-img" src="https://via.placeholder.com/150/f5e6d3/5d4037?text=照片" alt="头像">
-                <div class="edit-overlay" id="avatar-edit-hint">点击更换照片</div>
+            <div class="avatar-container">
+                <img id="profile-img" src="https://via.placeholder.com/150/f5e6d3/5d4037?text=加载中" alt="头像">
             </div>
-            <h1 contenteditable="false" class="editable" id="member-name">加载中...</h1>
+            <h1 contenteditable="false" class="editable" id="member-name"></h1>
             <div class="years">
-                <span contenteditable="false" class="editable" id="birth-year">0000</span> 
-                - 
-                <span contenteditable="false" class="editable" id="death-year">0000</span>
+                <span contenteditable="false" class="editable" id="birth-year"></span> - 
+                <span contenteditable="false" class="editable" id="death-year"></span>
             </div>
         </div>
 
@@ -74,128 +56,111 @@
         </div>
 
         <div id="content-bio" class="content-section">
-            <div contenteditable="false" class="editable" id="bio-text">加载生平中...</div>
+            <div contenteditable="false" class="editable" id="bio-text"></div>
         </div>
-
         <div id="content-heritage" class="content-section" style="display:none;">
-            <div contenteditable="false" class="editable" id="heritage-text">加载寄语中...</div>
+            <div contenteditable="false" class="editable" id="heritage-text"></div>
         </div>
     </div>
 
-    <!-- 底部导航 -->
     <div class="bottom-nav">
-        <a href="?id=list" class="nav-btn"><i class="fa-solid fa-tree"></i>家族树</a>
+        <div class="nav-btn"><i class="fa-solid fa-tree"></i>树</div>
         <div class="nav-btn admin" onclick="toggleEditMode()">
-            <i class="fa-solid fa-user-gear"></i>
-            <span id="btn-text">管理模式</span>
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span id="btn-text">云端编辑</span>
         </div>
-        <div class="nav-btn" onclick="shareUrl()"><i class="fa-solid fa-share-nodes"></i>分享</div>
     </div>
-
-    <input type="file" id="file-input" accept="image/*" onchange="previewImage(event)">
 </div>
 
 <script>
-    // 1. 家族模拟数据库 (你可以在这里自定义所有人信息)
-    const familyDatabase = {
-        "1": {
-            name: "dd",
-            birth: "500-2-31",
-            death: "5000-4-31",
-            bio: "安徽滁州第一龙太子",
-            heritage: "如此淡定",
-            photo: 
-        },
-        "2": {
-            name: "张淑芬",
-            birth: "1948",
-            death: "至今",
-            bio: "张氏淑芬，勤俭持家，擅烹饪织造。一生辛劳抚育子女，晚年喜弄孙为乐。",
-            heritage: "“平平安安就是福，和和气气才是家。”",
-            photo: "https://via.placeholder.com/150/f5e6d3/5d4037?text=张淑芬"
-        }
-    };
+    // ==========================================
+    // ⚠️ 在这里填入你的 Supabase URL 和 KEY
+    // ==========================================
+    const SUPABASE_URL = 'https://lmaxmseuuscjhnmcbdgq.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_SLrEiNjvlJEfNNt-DrZ6NQ_XfYwfdqL';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 2. 解析网址 ID 并加载数据
-    function loadMemberData() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const id = urlParams.get('id') || "1"; // 如果没填 ID，默认显示 ID 1
-        
-        const member = familyDatabase[id];
-        
-        if (member) {
-            document.getElementById('member-name').innerText = member.name;
-            document.getElementById('birth-year').innerText = member.birth;
-            document.getElementById('death-year').innerText = member.death;
-            document.getElementById('bio-text').innerText = member.bio;
-            document.getElementById('heritage-text').innerText = member.heritage;
-            document.getElementById('profile-img').src = member.photo;
+    // 获取当前人物的 ID
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentMemberId = urlParams.get('id') || "1";
+
+    // 页面加载时，从云端获取数据
+    async function loadDataFromCloud() {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('member-content').style.display = 'none';
+
+        const { data, error } = await supabase
+            .from('family_members')
+            .select('*')
+            .eq('id', currentMemberId)
+            .single();
+
+        if (data) {
+            document.getElementById('member-name').innerText = data.name || "未命名";
+            document.getElementById('birth-year').innerText = data.birth || "未知";
+            document.getElementById('death-year').innerText = data.death || "未知";
+            document.getElementById('bio-text').innerText = data.bio || "点击云端编辑添加生平...";
+            document.getElementById('heritage-text').innerText = data.heritage || "点击云端编辑添加寄语...";
+            if (data.photo_url) document.getElementById('profile-img').src = data.photo_url;
         } else {
-            document.getElementById('member-content').innerHTML = `
-                <div class="error-msg">
-                    <i class="fa-solid fa-leaf" style="font-size:50px; color:var(--gold); margin-bottom:20px;"></i>
-                    <p>尚未激活这片树叶的信息</p>
-                    <small>请点击下方管理模式进行创建</small>
-                </div>`;
+            // 如果数据库里没有这个人，显示空模板准备编辑
+            document.getElementById('member-name').innerText = "新成员";
+            document.getElementById('bio-text').innerText = "请开启云端编辑输入信息...";
         }
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('member-content').style.display = 'block';
     }
 
-    // 页面启动时加载
-    window.onload = loadMemberData;
-
-    // 3. 管理模式与交互逻辑
+    // 云端保存与编辑逻辑
     let isEditMode = false;
-    function toggleEditMode() {
+    async function toggleEditMode() {
         isEditMode = !isEditMode;
         const app = document.getElementById('app');
         const editables = document.querySelectorAll('.editable');
         const btnText = document.getElementById('btn-text');
-        const avatarHint = document.getElementById('avatar-edit-hint');
 
         if (isEditMode) {
             app.classList.add('edit-mode');
             editables.forEach(el => el.contentEditable = "true");
-            btnText.innerText = "完成修改";
-            avatarHint.style.display = "flex";
+            btnText.innerText = "保存至云端";
+            alert("已开启编辑。修改完文字后，请再次点击下方按钮保存。");
         } else {
             app.classList.remove('edit-mode');
             editables.forEach(el => el.contentEditable = "false");
-            btnText.innerText = "管理模式";
-            avatarHint.style.display = "none";
-            alert("修改已在本地生效（部署数据库后可同步至所有设备）。");
+            btnText.innerText = "正在保存...";
+
+            // 抓取页面上修改后的文字
+            const newData = {
+                id: currentMemberId,
+                name: document.getElementById('member-name').innerText,
+                birth: document.getElementById('birth-year').innerText,
+                death: document.getElementById('death-year').innerText,
+                bio: document.getElementById('bio-text').innerText,
+                heritage: document.getElementById('heritage-text').innerText
+            };
+
+            // 发送到 Supabase
+            const { error } = await supabase.from('family_members').upsert(newData);
+
+            if (error) {
+                alert("保存失败，请检查数据库设置！错误信息: " + error.message);
+            } else {
+                alert("信息已永久保存至云端！所有设备刷新即可看到最新内容。");
+            }
+            btnText.innerText = "云端编辑";
         }
     }
 
     function switchTab(type) {
-        const bio = document.getElementById('content-bio');
-        const heritage = document.getElementById('content-heritage');
-        const tabs = document.querySelectorAll('.tab');
-        if (type === 'bio') {
-            bio.style.display = 'block'; heritage.style.display = 'none';
-            tabs[0].classList.add('active'); tabs[1].classList.remove('active');
-        } else {
-            bio.style.display = 'none'; heritage.style.display = 'block';
-            tabs[0].classList.remove('active'); tabs[1].classList.add('active');
-        }
+        document.getElementById('content-bio').style.display = type === 'bio' ? 'block' : 'none';
+        document.getElementById('content-heritage').style.display = type === 'heritage' ? 'block' : 'none';
+        document.querySelectorAll('.tab')[0].classList.toggle('active', type === 'bio');
+        document.querySelectorAll('.tab')[1].classList.toggle('active', type === 'heritage');
     }
 
-    function triggerUpload() { if (isEditMode) document.getElementById('file-input').click(); }
-    
-    function previewImage(event) {
-        const reader = new FileReader();
-        reader.onload = () => document.getElementById('profile-img').src = reader.result;
-        reader.readAsDataURL(event.target.files[0]);
-    }
-
-    function shareUrl() {
-        const tempInput = document.createElement('input');
-        document.body.appendChild(tempInput);
-        tempInput.value = window.location.href;
-        tempInput.select();
-        document.execCommand('copy');
-        document.body.removeChild(tempInput);
-        alert('链接已复制，可以写入NFC或发给家人了！');
-    }
+    // 启动拉取数据
+    loadDataFromCloud();
 </script>
 
 </body>
