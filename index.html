@@ -82,7 +82,7 @@
 
     // 获取当前人物的 ID
     const urlParams = new URLSearchParams(window.location.search);
-    const currentMemberId = urlParams.get('id') || "1";
+    const currentMemberId = Number(urlParams.get('id')) || 1;
 
     // 页面加载时，从云端获取数据
     async function loadDataFromCloud() {
