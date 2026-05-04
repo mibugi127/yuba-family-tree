@@ -75,7 +75,7 @@
 <script>
     const SUPABASE_URL = 'https://lmaxmseuuscjhnmcbdgq.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_SLrEiNjvlJEfNNt-DrZ6NQ_XfYwfdqL';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const mysupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     const urlParams = new URLSearchParams(window.location.search);
     const currentMemberId = Number(urlParams.get('id')) || 1;
 
@@ -84,7 +84,7 @@
         document.getElementById('loading').style.display = 'block';
         document.getElementById('member-content').style.display = 'none';
 
-        const { data, error } = await supabase
+        const { data, error } = await mysupabase
             .from('family_members')
             .select('*')
             .eq('id', currentMemberId)
@@ -136,7 +136,7 @@
             };
 
             // 发送到 Supabase
-            const { error } = await supabase.from('family_members').upsert(newData);
+            const { error } = await mysupabase.from('family_members').upsert(newData);
 
             if (error) {
                 alert("保存失败，请检查数据库设置！错误信息: " + error.message);
