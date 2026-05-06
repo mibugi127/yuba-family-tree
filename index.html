@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>家族记忆传承</title>
-    <!-- 引入外部样式和库 -->
+    <!-- 引入 Supabase 库 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary-color: #8c2727; /* 经典朱红色 */
             --bg-color: #fcf8f2; /* 宣纸色 */
             --text-color: #332b2b;
+            --border-color: #e5dec9;
         }
 
         body {
@@ -41,7 +42,6 @@
             background: repeating-linear-gradient(45deg, var(--primary-color), var(--primary-color) 10px, #a63a3a 10px, #a63a3a 20px);
         }
 
-        /* 加载动画 */
         #loading {
             text-align: center;
             padding-top: 100px;
@@ -49,23 +49,22 @@
             color: #999;
         }
 
-        /* 核心照片区 */
+        /* 头部照片与名字区域 */
         .profile-section {
             text-align: center;
-            padding: 40px 20px;
+            padding: 40px 20px 20px;
             background: linear-gradient(to bottom, #fff, var(--bg-color));
         }
 
         .photo-frame {
-            width: 180px;
-            height: 180px;
-            margin: 0 auto 20px;
+            width: 160px;
+            height: 160px;
+            margin: 0 auto 15px;
             border-radius: 50%;
-            border: 5px solid white;
-            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+            border: 4px solid white;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
             overflow: hidden;
             background: #eee;
-            position: relative;
         }
 
         .photo-frame img {
@@ -81,21 +80,53 @@
             letter-spacing: 2px;
         }
 
-        .years {
-            font-size: 14px;
-            color: #777;
-            margin-top: 5px;
+        .subtitle {
+            font-size: 15px;
+            color: #666;
+            margin-top: 8px;
         }
 
-        /* 内容板块 */
+        /* 基本信息卡片（地址、电话等） */
+        .info-card {
+            margin: 0 20px 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            font-size: 15px;
+            line-height: 2;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            border-bottom: 1px dashed #f0eadc;
+            padding: 5px 0;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            color: #888;
+            width: 70px;
+            flex-shrink: 0;
+        }
+        .info-value {
+            flex-grow: 1;
+            color: var(--text-color);
+        }
+
+        /* 生平事迹卡片 */
         .content-card {
             margin: 20px;
-            padding: 25px;
-            border: 1px solid #e5dec9;
+            padding: 25px 20px 20px;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             background: #fff;
             position: relative;
             line-height: 1.8;
+            text-align: justify;
         }
 
         .card-label {
@@ -104,16 +135,19 @@
             left: 20px;
             background: var(--primary-color);
             color: white;
-            padding: 2px 12px;
-            font-size: 12px;
+            padding: 3px 12px;
+            font-size: 13px;
             border-radius: 4px;
+            letter-spacing: 1px;
         }
 
-        /* 编辑模式样式 */
+        /* 编辑模式视觉提示 */
         [contenteditable="true"] {
             border-bottom: 1px dashed var(--primary-color);
             outline: none;
-            background-color: #fff9f9;
+            background-color: #fffcf8;
+            min-width: 20px;
+            display: inline-block;
         }
 
         /* 底部导航栏 */
@@ -127,6 +161,7 @@
             display: flex;
             border-top: 1px solid #eee;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            z-index: 100;
         }
 
         .nav-item {
@@ -140,11 +175,6 @@
             cursor: pointer;
         }
 
-        .nav-item.active {
-            color: var(--primary-color);
-            font-weight: bold;
-        }
-
         .nav-item i { font-size: 20px; margin-bottom: 2px; }
     </style>
 </head>
@@ -156,28 +186,39 @@
     <div id="loading">正在开启家族记忆之门...</div>
 
     <div id="member-content" style="display: none;">
+        
+        <!-- 头部区域：照片与姓名年龄 -->
         <div class="profile-section">
             <div class="photo-frame">
-                <!-- ID 必须匹配，用于 JS 替换图片 -->
-                <img id="member-photo" src="https://via.placeholder.com/150" alt="家族成员照片">
+                <!-- 预设的头像，如果数据库有 photo_url 就会自动替换 -->
+                <img id="member-photo" src="https://via.placeholder.com/150?text=暂无照片" alt="家族成员照片">
             </div>
-            <h1 id="member-name" contenteditable="false">新成员</h1>
-            <div class="years">
-                <span id="member-birth" contenteditable="false">19XX</span> 
-                — 
-                <span id="member-death" contenteditable="false">20XX</span>
+            <h1 id="member-name" contenteditable="false">姓名加载中</h1>
+            <div class="subtitle">
+                <span id="member-age" contenteditable="false">--</span>岁 | 
+                生于 <span id="member-birth" contenteditable="false">----/--/--</span>
             </div>
         </div>
 
-        <div class="content-card">
-            <div class="card-label">生平大事</div>
-            <div id="member-bio" contenteditable="false">点击下方的云端编辑来书写这段记忆...</div>
+        <!-- 基本联系信息区域 -->
+        <div class="info-card">
+            <div class="info-row">
+                <div class="info-label">📍 地址</div>
+                <div class="info-value" id="member-address" contenteditable="false">加载中...</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">📞 电话</div>
+                <div class="info-value" id="member-phone" contenteditable="false">加载中...</div>
+            </div>
         </div>
 
+        <!-- 核心生平事迹区域 -->
         <div class="content-card">
-            <div class="card-label">家族寄语</div>
-            <div id="member-heritage" contenteditable="false">这里留给后辈的珍贵嘱托...</div>
+            <div class="card-label">生平事迹</div>
+            <!-- 这里直接调取你数据库里的 heritage 字段 -->
+            <div id="member-bio" contenteditable="false">生平事迹加载中...</div>
         </div>
+
     </div>
 
     <!-- 底部控制 -->
@@ -192,7 +233,9 @@
 </div>
 
 <script>
-    // === 请在这里填入你的真实 Supabase 信息 ===
+    // ==========================================
+    // ⚠️ 必须在这里填入你的真实 Supabase 链接和钥匙
+    // ==========================================
     const SUPABASE_URL = 'https://lmaxmseuuscjhnmcbdgq.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_SLrEiNjvlJEfNNt-DrZ6NQ_XfYwfdqL'; 
     const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -213,21 +256,34 @@
         document.getElementById('loading').style.display = 'none';
         document.getElementById('member-content').style.display = 'block';
 
+        if (error) {
+            console.error("读取错误:", error);
+            return;
+        }
+
         if (data) {
-            document.getElementById('member-name').innerText = data.name;
-            document.getElementById('member-birth').innerText = data.birth;
-            document.getElementById('member-death').innerText = data.death || '至今';
-            document.getElementById('member-bio').innerText = data.bio;
-            document.getElementById('member-heritage').innerText = data.heritage;
-            // 核心：加载照片链接
+            // 完美对应你的数据库列名
+            document.getElementById('member-name').innerText = data.name || '';
+            document.getElementById('member-birth').innerText = data.birth || '';
+            document.getElementById('member-age').innerText = data.age || '';
+            document.getElementById('member-address').innerText = data.address || '';
+            
+            // 因为你的列名包含空格 (telephone number)，所以必须用方括号语法读取
+            document.getElementById('member-phone').innerText = data['telephone number'] || '';
+            
+            // 你把事迹写在了 heritage 列里，所以这里把 heritage 赋给生平事迹框
+            document.getElementById('member-bio').innerText = data.heritage || '';
+            
+            // 只要数据库里有 photo_url 列且有内容，就会自动加载照片
             if (data.photo_url) {
                 document.getElementById('member-photo').src = data.photo_url;
             }
         }
     }
 
+    // 云端编辑与保存逻辑
     async function toggleEdit() {
-        const fields = ['member-name', 'member-birth', 'member-death', 'member-bio', 'member-heritage'];
+        const fields = ['member-name', 'member-birth', 'member-age', 'member-address', 'member-phone', 'member-bio'];
         const btnText = document.getElementById('edit-text');
         
         if (!isEditing) {
@@ -236,16 +292,18 @@
             fields.forEach(id => document.getElementById(id).contentEditable = "true");
             btnText.innerText = "保存更改";
             document.getElementById('edit-icon').innerText = "💾";
+            document.getElementById('member-name').focus(); // 自动聚焦
         } else {
-            // 保存逻辑
+            // 准备保存数据，完美映射回你的数据库列名
             btnText.innerText = "正在同步...";
             const newData = {
                 id: currentMemberId,
                 name: document.getElementById('member-name').innerText,
                 birth: document.getElementById('member-birth').innerText,
-                death: document.getElementById('member-death').innerText,
-                bio: document.getElementById('member-bio').innerText,
-                heritage: document.getElementById('member-heritage').innerText
+                age: document.getElementById('member-age').innerText,
+                address: document.getElementById('member-address').innerText,
+                'telephone number': document.getElementById('member-phone').innerText,
+                heritage: document.getElementById('member-bio').innerText // 保存时再次对应回去
             };
 
             const { error } = await mySupabase.from('family_members').upsert(newData);
@@ -253,7 +311,7 @@
             if (error) {
                 alert("同步失败：" + error.message);
             } else {
-                alert("记忆已存入云端");
+                alert("信息已永久保存至云端！");
                 isEditing = false;
                 fields.forEach(id => document.getElementById(id).contentEditable = "false");
                 btnText.innerText = "云端编辑";
@@ -262,6 +320,7 @@
         }
     }
 
+    // 启动数据加载
     loadData();
 </script>
 </body>
