@@ -21,11 +21,12 @@
         .name { font-family: 'Noto Serif SC', serif; font-size: 38px; color: var(--red); text-align: center; letter-spacing: 6px; margin: 5px 0; }
         .info-panel { background: rgba(139,0,0,0.04); border-radius: 12px; padding: 15px; border-left: 5px solid var(--red); margin-top: 20px; }
         .info-panel p { margin: 10px 0; font-size: 15px; color: #333; line-height: 1.6; }
+        .hint { margin-top: auto; text-align: center; font-size: 13px; color: var(--gold); padding-bottom: 10px; }
     </style>
 </head>
 <body>
 
-<div id="loading-screen">正在开启林氏卷轴...</div>
+<div id="loading-screen">正在开启家族卷轴...</div>
 
 <div class="swiper mySwiper" id="main-app">
     <div class="swiper-wrapper">
@@ -36,16 +37,17 @@
                     <h1 class="name" id="ui-name">加载中</h1>
                     <div class="info-panel">
                         <p><b>出生日期：</b><span id="ui-birth"></span></p>
-                        <p><b>居住地址：</b><span id="ui-addr"></span></p>
+                        <p><b>家族住址：</b><span id="ui-addr"></span></p>
                         <p><b>联系方式：</b><span id="ui-phone"></span></p>
                     </div>
+                    <div class="hint">左滑翻阅生平事迹 ➔</div>
                 </div>
             </div>
         </div>
         <div class="swiper-slide">
             <div class="profile-card">
                 <div class="content">
-                    <h2 style="color:var(--red); border-bottom:1px solid var(--gold);">📜 生平事迹</h2>
+                    <h2 style="color:var(--red); border-bottom:1px solid var(--gold); padding-bottom:10px;">📜 生平事迹</h2>
                     <div id="ui-bio" style="font-size: 16px; line-height: 2; color:#444; overflow-y: auto; text-indent: 2em; padding-top:15px;"></div>
                 </div>
             </div>
@@ -54,62 +56,21 @@
 </div>
 
 <script>
-    // 2. 这里是关键！定义在函数外面，确保全局都能找到它
-    let mySupabase; 
-
-    // 配置信息
+    // 1. 核心配置：请务必确保 URL 末尾没有多余的冒号或斜杠
     const SB_URL = 'https://lmaxmseuuscjhnmcbdgq.supabase.co';
-    const SB_KEY = 'sb_publishable_SLrEiNjvlJEfNNt-DrZ6NQ_XfYwfdqL'; // ⚠️ 千万不要填“替换为你的KEY”
+    // ⚠️ 请在这里粘贴你从 Supabase 后台复制的那个超长 Anon Key
+    const SB_KEY = 'sb_publishable_SLrEiNjvlJEfNNt-DrZ6NQ_XfYwfdqL'; 
 
-    // 获取页面链接里的 ID
-    const urlParams = new URLSearchParams(window.location.search);
-    const mid = urlParams.get('id') || 1;
+    // 💡 关键修正：使用 mySupabase 避免与库自带的 supabase 变量冲突
+    let mySupabase;
 
-    async function load() {
-        // A. 检查 Supabase 库是否加载成功
+    async function loadData() {
+        // A. 检查库是否正确加载
         if (typeof supabase === 'undefined') {
-            console.error("错误：Supabase 库没加载出来，请检查网络！");
-            document.getElementById('loading-screen').innerText = "库加载失败，请检查网络";
+            console.error("Supabase 库未成功加载，请检查网络或 CDN 链接");
+            document.getElementById('loading-screen').innerText = "加载失败：库未就绪";
             return;
         }
 
-        // B. 初始化客户端
-        mySupabase = supabase.createClient(SB_URL, SB_KEY);
-
-        // C. 开始读取数据
-        const { data, error } = await mySupabase
-            .from('family_members')
-            .select('*')
-            .eq('id', mid)
-            .single();
-
-        if (error) {
-            console.error("读取数据库失败:", error.message);
-            document.getElementById('loading-screen').innerText = "读取失败: " + error.message;
-            return;
-        }
-
-        if (data) {
-            // D. 匹配你的中文列名
-            document.getElementById('ui-name').innerText = data['姓名'] || '未填';
-            document.getElementById('ui-birth').innerText = data['出生日期'] || '未填';
-            document.getElementById('ui-addr').innerText = data['住址'] || '未填';
-            document.getElementById('ui-phone').innerText = data['电话号码'] || '未填';
-            document.getElementById('ui-bio').innerText = data['生平事迹'] || '暂无内容';
-            
-            // 如果你有照片列
-            if (data['照片']) document.getElementById('ui-photo').src = data['照片'];
-
-            // 隐藏加载，显示内容
-            document.getElementById('loading-screen').style.display = 'none';
-            document.getElementById('main-app').style.display = 'block';
-            
-            new Swiper(".mySwiper", { grabCursor: true });
-        }
-    }
-
-    // 页面一加载就运行
-    window.onload = load;
-</script>
-</body>
-</html>
+        // B. 初始化客户端（注意这里前面不加 const 或 let）
+        mySup
