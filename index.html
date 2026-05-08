@@ -3,206 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家族传承 - 电子族谱</title>
+    <title>家族传承 - 翻阅族谱</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     
     <style>
-        /* 1. 极简新中式背景：暖白宣纸色 */
         body { 
             background-color: #FDFBF7; 
             background-image: url('https://www.transparenttextures.com/patterns/rice-paper.png'); 
-            font-family: 'STKaiti', 'KaiTi', 'PingFang SC', serif; /* 优先使用楷体等传统字体 */
-            color: #333; 
-            margin: 0; 
-            padding: 20px; 
-            display: flex; 
-            justify-content: center; 
-            min-height: 100vh; 
-            align-items: center; 
+            font-family: 'STKaiti', 'KaiTi', 'PingFang SC', serif;
+            margin: 0; padding: 0; 
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
         }
 
-        /* 2. 卡片主体：立体感与玉石阴影 */
+        /* 翻页容器大小 */
+        .swiper { width: 100%; max-width: 420px; height: 90vh; }
+
+        /* 单个卡片样式 */
         .profile-card { 
-            background: #FFFFFF; 
-            border-radius: 20px; 
-            box-shadow: 0 15px 35px rgba(139, 0, 0, 0.08); /* 偏暗红的阴影增加质感 */
-            border: 1px solid #EAE0D5; 
-            overflow: hidden; 
-            position: relative; 
-            animation: fadeIn 1.2s ease-in-out; 
-            max-width: 420px; 
-            width: 100%; 
-            text-align: center; 
-            padding-bottom: 30px; 
+            background: #FFFFFF; border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(139, 0, 0, 0.08);
+            border: 1px solid #EAE0D5; overflow: hidden;
+            height: 100%; display: flex; flex-direction: column;
         }
 
-        /* 顶部红色点缀，类似古籍书脊 */
-        .header-bg { 
-            background: #8B0000; 
-            height: 40px; 
-            width: 100%; 
-        }
-
-        /* 3. 头像框：金色虚线与留白 */
+        .header-bg { background: #8B0000; height: 30px; width: 100%; }
+        
+        /* 第一页特有样式 */
         .avatar-container { 
-            margin: -30px auto 15px; 
-            width: 130px; 
-            height: 130px; 
-            padding: 6px; 
-            border: 2px dashed #C8A97E; /* 古铜金边框 */
-            border-radius: 50%; 
-            background: #fff; 
-            box-shadow: 0 5px 15px rgba(200, 169, 126, 0.3);
+            margin: -20px auto 10px; width: 120px; height: 120px; 
+            padding: 5px; border: 2px dashed #C8A97E; border-radius: 50%; background: #fff;
         }
         .avatar-container img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 
-        /* 4. 文字排版 */
-        .name { font-size: 32px; color: #8B0000; margin: 10px 0 5px; font-weight: bold; letter-spacing: 2px;}
-        .subtitle { font-size: 15px; color: #777; margin-bottom: 25px; }
+        .name { font-size: 28px; color: #8B0000; margin: 5px 0; font-weight: bold; text-align:center; }
+        .info-section { background: rgba(250, 250, 248, 0.8); padding: 15px; margin: 10px 20px; border-radius: 10px; border: 1px solid #eee; }
+        .label { color: #8B0000; font-weight: bold; margin-right: 8px; }
+        .page-hint { text-align: center; font-size: 12px; color: #C8A97E; margin-top: auto; padding-bottom: 20px; animation: bounce 2s infinite; }
 
-        /* 5. 信息区块分割 */
-        .info-section { 
-            border-top: 1px solid #EAE0D5; 
-            background: linear-gradient(to bottom, #FAFAF8, #FFFFFF); 
-            text-align: left; 
-            padding: 20px; 
-            margin: 0 20px; 
-            border-radius: 10px; 
-        }
-        .info-item { margin-bottom: 15px; font-size: 16px; line-height: 1.8; display: flex;}
-        .info-item .label { color: #8B0000; font-weight: bold; min-width: 60px; margin-right: 10px;}
-        
-        .bio-tag { 
-            background: #8B0000; 
-            color: white; 
-            padding: 4px 10px; 
-            border-radius: 4px; 
-            font-size: 13px; 
-            display: inline-block; 
-            margin-bottom: 12px; 
-        }
+        /* 第二页：传承志详情 */
+        .detail-page { padding: 30px 25px; text-align: justify; line-height: 2; color: #444; font-size: 17px; }
+        .detail-title { border-bottom: 2px solid #8B0000; display: inline-block; padding-bottom: 5px; margin-bottom: 20px; color: #8B0000; font-weight: bold; }
 
-        /* 淡入动画 */
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(20px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
-        
-        #loading { text-align: center; padding: 50px; color: #8B0000; font-size: 18px; letter-spacing: 2px;}
-        #content { display: none; }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateX(0);} 40% {transform: translateX(-5px);} 60% {transform: translateX(5px);} }
     </style>
 </head>
 <body>
 
-    <div id="loading">正在开启族谱...</div>
+<div id="loading" style="color: #8B0000;">开启卷轴...</div>
 
-    <div id="content" class="profile-card">
-        <div class="header-bg"></div>
-        <div class="avatar-container">
-            <img id="member-photo" src="" alt="家族成员照片">
-        </div>
-        <h1 class="name" id="member-name">加载中...</h1>
-        <div class="subtitle" id="member-birth">加载中...</div>
+<div class="swiper mySwiper" id="main-container" style="display: none;">
+    <div class="swiper-wrapper">
+        <div class="swiper-slide">
+            <div class="profile-card">
+                <div class="header-bg"></div>
+                <div class="avatar-container"><img id="m-photo" src=""></div>
+                <h1 class="name" id="m-name"></h1>
+                <div style="text-align:center; color:#888; font-size:14px;" id="m-birth"></div>
+                
+                <div class="info-section">
+                    <div><span class="label">居所:</span><span id="m-addr"></span></div>
+                    <div style="margin-top:8px;"><span class="label">传书:</span><span id="m-phone"></span></div>
+                </div>
 
-        <div class="info-section">
-            <div class="info-item">
-                <div class="label">📍 居所</div>
-                <div id="member-address">加载中...</div>
+                <div class="info-section">
+                    <div class="label" style="margin-bottom:5px;">生平简述</div>
+                    <div id="m-heritage" style="text-indent: 2em;"></div>
+                </div>
+                <div class="page-hint">左滑翻阅传承志 ➔</div>
             </div>
-            <div class="info-item">
-                <div class="label">📞 传书</div>
-                <div id="member-phone">加载中...</div>
-            </div>
         </div>
 
-        <div class="info-section" style="margin-top: 20px;">
-            <div class="bio-tag">生平事迹</div>
-            <div class="info-item" style="display: block; text-indent: 2em; text-align: justify; color: #444;">
-                <span id="member-bio">加载中...</span>
+        <div class="swiper-slide">
+            <div class="profile-card">
+                <div class="header-bg"></div>
+                <div class="detail-page">
+                    <div class="detail-title">📜 家族传承志</div>
+                    <div id="m-detail" style="text-indent: 2em;">暂无详细记载。</div>
+                </div>
+                <div class="page-hint" style="animation: none;">☚ 右滑返回首页</div>
             </div>
         </div>
     </div>
+    <div class="swiper-pagination"></div>
+</div>
 
-    <audio id="nfcSound" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3" preload="auto"></audio>
+<audio id="nfcSound" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3" preload="auto"></audio>
 
-    <script>
-        // ==========================================
-        // 1. 这里填入你的 Supabase 数据库信息
-        // ==========================================
-        const SUPABASE_URL = 'https://lmaxmseuuscjhnmcbdgq.supabase.co'; 
-        const SUPABASE_KEY = 'sb_publishable_SLrEiNjvlJEfNNt-DrZ6NQ_XfYwfdqL'; // ⚠️ 注意：千万别删掉两边的单引号
+<script>
+    const SUPABASE_URL = 'https://lmaxmseuuscjhnmcbdgq.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_SLrEiNjvlJEfNNt-DrZ6NQ_XfYwfdqL'; 
+    const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 初始化客户端，使用 mySupabase 避免变量冲突报错
-        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const urlParams = new URLSearchParams(window.location.search);
+    const memberId = Number(urlParams.get('id')) || 1;
 
-        // 获取 URL 中的 ?id= 参数
-        const urlParams = new URLSearchParams(window.location.search);
-        const currentMemberId = Number(urlParams.get('id')) || 1;
+    // 初始化滑动效果
+    const swiper = new Swiper(".mySwiper", {
+        effect: "slide",
+        pagination: { el: ".swiper-pagination", clickable: true },
+        on: { slideChange: function() { playSound(); } } // 翻页时响一声
+    });
 
-        // ==========================================
-        // 2. 音效播放逻辑 (突破浏览器限制)
-        // ==========================================
-        function playOpenSound() {
-            const audio = document.getElementById('nfcSound');
-            // 尝试自动播放
-            audio.play().catch(error => {
-                console.log("浏览器限制了自动播放，等待用户点击或滑动屏幕");
-                // 如果被苹果/安卓浏览器拦截，就等用户手指碰一下屏幕的瞬间立刻播放
-                const playOnTouch = () => {
-                    audio.play();
-                    document.body.removeEventListener('click', playOnTouch);
-                    document.body.removeEventListener('touchstart', playOnTouch);
-                };
-                document.body.addEventListener('click', playOnTouch);
-                document.body.addEventListener('touchstart', playOnTouch);
-            });
-        }
+    function playSound() {
+        const audio = document.getElementById('nfcSound');
+        audio.play().catch(()=>{});
+    }
 
-        // ==========================================
-        // 3. 从云端拉取数据并渲染
-        // ==========================================
-        async function loadDataFromCloud() {
-            try {
-                // 访问 family_members 表格
-                const { data, error } = await mySupabase
-                    .from('family_members')
-                    .select('*')
-                    .eq('id', currentMemberId)
-                    .single();
-
-                if (error) throw error;
-
-                // 填入数据
-                if (data) {
-                    document.getElementById('member-name').innerText = data.name || '未知';
-                    document.getElementById('member-birth').innerText = (data.age ? data.age + '岁 | ' : '') + '生于 ' + (data.birth || '未知');
-                    document.getElementById('member-address').innerText = data.address || '暂无居所记录';
-                    document.getElementById('member-phone').innerText = data['telephone number'] || '暂无传书记录';
-                    document.getElementById('member-bio').innerText = data.heritage || '暂无事迹记录';
-
-                    // 检查是否有照片链接
-                    if (data.photo_url) {
-                        document.getElementById('member-photo').src = data.photo_url;
-                    } else {
-                        // 没有照片时显示一个带字的空白占位图
-                        document.getElementById('member-photo').src = 'https://via.placeholder.com/150/FDFBF7/8B0000?text=暂无影像';
-                    }
-
-                    // 数据加载完后，隐藏“正在开启”，显示精美卡片
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('content').style.display = 'block';
-
-                    // 触发音效
-                    playOpenSound();
-                }
-            } catch (err) {
-                console.error("加载失败:", err);
-                document.getElementById('loading').innerText = "卷轴展开失败，请检查网络或配置。";
+    async function fetchData() {
+        const { data, error } = await mySupabase.from('family_members').select('*').eq('id', memberId).single();
+        if (data) {
+            document.getElementById('m-name').innerText = data.name;
+            document.getElementById('m-photo').src = data.photo_url || 'https://via.placeholder.com/150';
+            document.getElementById('m-birth').innerText = `寿享 ${data.age} 载 | 生于 ${data.birth}`;
+            document.getElementById('m-addr').innerText = data.address;
+            document.getElementById('m-phone').innerText = data['telephone number'];
+            document.getElementById('m-heritage').innerText = data.heritage;
+            
+            // 如果你在数据库加了新列，这里可以读取新列
+            if(data.heritage_detail) {
+                document.getElementById('m-detail').innerText = data.heritage_detail;
+            } else {
+                // 如果没加新列，就把原本的 heritage 复制一份到第二页展示
+                document.getElementById('m-detail').innerText = data.heritage;
             }
-        }
 
-        // 网页一打开，就开始执行加载
-        window.onload = loadDataFromCloud;
-    </script>
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('main-container').style.display = 'block';
+            playSound();
+        }
+    }
+
+    window.onload = fetchData;
+</script>
 </body>
 </html>
