@@ -3,56 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>林氏家族传承志</title>
+    <title>林氏传承志</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&display=swap" rel="stylesheet">
     
     <style>
         :root { --red: #8B0000; --gold: #C8A97E; --paper: #FDFBF7; }
-        body { background: #EAE0D5; font-family: 'Noto Serif SC', serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        body { background: #EAE0D5; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'PingFang SC', serif; }
 
-        .swiper { width: 100%; max-width: 414px; height: 92vh; }
+        .swiper { width: 100%; max-width: 400px; height: 90vh; }
         
         .profile-card {
-            background: var(--paper); border-radius: 28px; box-shadow: 0 25px 50px rgba(0,0,0,0.2);
-            height: 100%; overflow: hidden; display: flex; flex-direction: column; position: relative;
+            background: var(--paper); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            height: 100%; overflow: hidden; position: relative; display: flex; flex-direction: column;
             border: 1px solid rgba(200, 169, 126, 0.4);
         }
 
-        /* 动态水印层 */
-        .bg-overlay {
-            position: absolute; inset: 0; opacity: 0.08; pointer-events: none; z-index: 0;
-            background-size: 400px; transition: all 0.5s ease;
+        /* 动态背景装饰：根据人物身份自动切换纹理 */
+        .bg-watermark {
+            position: absolute; inset: 0; opacity: 0.1; pointer-events: none; z-index: 0;
+            background-size: 350px;
         }
-        /* 1. 书法水印 - 对应林振邦 */
-        .style-calligraphy { background-image: url('https://www.transparenttextures.com/patterns/brush-stroke.png'); opacity: 0.15; }
-        /* 2. 电路水印 - 对应林远山 */
-        .style-circuit { background-image: url('https://www.transparenttextures.com/patterns/circuit-board.png'); }
-        /* 3. 艺术/花纹水印 - 对应林静芳/沈清芷 */
-        .style-art { background-image: url('https://www.transparenttextures.com/patterns/floral-vines.png'); }
-        /* 4. 代码流水印 - 对应林苏然 */
-        .style-code { background-image: url('https://www.transparenttextures.com/patterns/carbon-fibre.png'); }
+        /* 书法纹理类 */
+        .watermark-calligraphy { background-image: url('https://www.transparenttextures.com/patterns/brush-stroke.png'); opacity: 0.15; }
+        /* 芯片纹理类 */
+        .watermark-circuit { background-image: url('https://www.transparenttextures.com/patterns/circuit-board.png'); }
 
-        .content-layer { position: relative; z-index: 1; padding: 30px 25px; height: 100%; display: flex; flex-direction: column; }
+        .content { position: relative; z-index: 1; padding: 30px 20px; display: flex; flex-direction: column; height: 100%; }
 
-        .avatar-frame {
-            width: 140px; height: 140px; margin: 0 auto 15px; padding: 8px;
-            border: 2px solid var(--gold); border-radius: 50%; background: #fff;
+        .header-line { height: 6px; background: linear-gradient(90deg, var(--red), var(--gold), var(--red)); margin: -30px -20px 25px; }
+
+        .photo-frame {
+            width: 130px; height: 130px; margin: 0 auto 15px; padding: 6px;
+            border: 1.5px solid var(--gold); border-radius: 50%; background: #fff;
         }
-        .avatar-frame img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-        .name-tag { font-size: 34px; color: var(--red); text-align: center; font-weight: 700; letter-spacing: 4px; margin: 5px 0; }
-        
-        /* 可视化亲缘树 */
-        .kinship-map { margin: 20px 0; display: flex; flex-direction: column; align-items: center; }
-        .node { padding: 6px 12px; border: 1px solid var(--gold); background: #fff; font-size: 13px; border-radius: 4px; min-width: 100px; text-align: center; position: relative; }
-        .node.active { background: var(--red); color: white; border: none; font-weight: bold; }
-        .connector { width: 1px; height: 12px; background: var(--gold); }
+        .photo-frame img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 
-        .bio-box { background: rgba(139,0,0,0.03); padding: 20px; border-radius: 12px; border-left: 4px solid var(--red); font-size: 15px; line-height: 1.8; color: #444; }
-        .footer-hint { margin-top: auto; text-align: center; color: var(--gold); font-size: 12px; padding-bottom: 5px; animation: bounce 2s infinite; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        .name { font-family: 'Noto Serif SC', serif; font-size: 34px; color: var(--red); text-align: center; letter-spacing: 5px; margin: 0; }
+        .motto { text-align: center; color: var(--gold); font-size: 14px; margin: 10px 0 20px; font-style: italic; }
+
+        .detail-box { background: rgba(139,0,0,0.03); border-radius: 12px; padding: 15px; margin-bottom: 20px; border-left: 3px solid var(--red); }
+        .detail-box p { margin: 5px 0; font-size: 14px; color: #555; }
+
+        /* 可视化关系树简易版 */
+        .tree { display: flex; flex-direction: column; align-items: center; margin-top: 20px; }
+        .tree-node { border: 1px solid var(--gold); padding: 5px 12px; font-size: 12px; border-radius: 4px; background: #fff; }
+        .tree-node.me { background: var(--red); color: white; border: none; font-weight: bold; }
+        .line { width: 1px; height: 10px; background: var(--gold); }
+
+        .hint { margin-top: auto; text-align: center; font-size: 12px; color: var(--gold); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -61,75 +63,79 @@
     <div class="swiper-wrapper">
         <div class="swiper-slide">
             <div class="profile-card">
-                <div class="bg-overlay" id="dynamic-bg"></div>
-                <div class="content-layer">
-                    <div class="avatar-frame"><img id="m-photo" src=""></div>
-                    <h1 class="name-tag" id="m-name">载入中...</h1>
-                    <p id="m-motto" style="text-align:center; color:var(--gold); font-style:italic; margin-bottom:20px;"></p>
-                    
-                    <div class="bio-box" id="m-short-bio"></div>
-                    <div class="footer-hint">左滑翻阅系谱 ➔</div>
+                <div class="header-line"></div>
+                <div class="bg-watermark" id="bg-marker"></div>
+                <div class="content">
+                    <div class="photo-frame"><img id="m-photo" src=""></div>
+                    <h1 class="name" id="m-name">加载中...</h1>
+                    <div class="motto" id="m-motto">加载寄语...</div>
+                    <div class="detail-box">
+                        <p><b>出生：</b><span id="m-birth">--</span></p>
+                        <p><b>居所：</b><span id="m-addr">--</span></p>
+                        <p id="m-bio" style="margin-top:10px; line-height:1.6; text-align:justify;"></p>
+                    </div>
+                    <div class="hint">左滑进入「传承页」 ➔</div>
                 </div>
             </div>
         </div>
 
         <div class="swiper-slide">
             <div class="profile-card">
-                <div class="bg-overlay" id="dynamic-bg-2"></div>
-                <div class="content-layer">
-                    <h3 style="color:var(--red); border-bottom:1px solid var(--gold);">🌳 家族亲缘</h3>
-                    <div class="kinship-map">
-                        <div class="node" id="t-parents">上辈</div>
-                        <div class="connector"></div>
-                        <div class="node active" id="t-self">本人</div>
-                        <div class="connector"></div>
-                        <div class="node" id="t-children">下辈</div>
+                <div class="header-line"></div>
+                <div class="content">
+                    <h3 style="color:var(--red); border-bottom:1px solid var(--gold); padding-bottom:5px;">🌳 系谱亲缘</h3>
+                    <div class="tree">
+                        <div class="tree-node" id="t-parents">上辈</div>
+                        <div class="line"></div>
+                        <div class="tree-node me" id="t-self">本人</div>
+                        <div class="line"></div>
+                        <div class="tree-node" id="t-children">下辈</div>
                     </div>
-
-                    <h3 style="color:var(--red); border-bottom:1px solid var(--gold); margin-top:20px;">📜 详细传承</h3>
-                    <div id="m-long-bio" style="font-size: 15px; line-height: 2; color:#555; overflow-y: auto; text-indent: 2em;"></div>
+                    <h3 style="color:var(--red); border-bottom:1px solid var(--gold); padding-bottom:5px; margin-top:30px;">📜 详细传承志</h3>
+                    <div id="m-long-bio" style="font-size: 15px; line-height: 2; color:#555; overflow-y: auto;"></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<audio id="pageSound" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3" preload="auto"></audio>
-
 <script>
-    const sbUrl = 'https://lmaxmseuuscjhnmcbdgq.supabase.co';
-    const sbKey = 'sb_publishable_SLrEiNjvlJEfNNt-DrZ6NQ_XfYwfdqL'; // 填入你的密钥
-    const supabase = window.supabase.createClient(sbUrl, sbKey);
+    const URL = 'https://lmaxmseuuscjhnmcbdgq.supabase.co';
+    const KEY = 'sb_publishable_SLrEiNjvlJEfNNt-DrZ6NQ_XfYwfdqL'; 
+    const sb = window.supabase.createClient(URL, KEY);
 
     const mid = new URLSearchParams(window.location.search).get('id') || 1;
 
     const swiper = new Swiper(".mySwiper", {
         grabCursor: true,
-        on: { slideChange: () => { document.getElementById('pageSound').play().catch(()=>{}); } }
+        loop: false
     });
 
-    async function loadData() {
-        const { data } = await supabase.from('family_members').select('*').eq('id', mid).single();
+    async function init() {
+        const { data } = await sb.from('family_members').select('*').eq('id', mid).single();
         if (data) {
             document.getElementById('m-name').innerText = data.name;
-            document.getElementById('t-self').innerText = data.name;
             document.getElementById('m-photo').src = data.photo_url;
-            document.getElementById('m-motto').innerText = `“${data.motto || '厚德载物'}”`;
-            document.getElementById('m-short-bio').innerText = data.heritage;
+            document.getElementById('m-motto').innerText = `“${data.motto || '家风永传'}”`;
+            document.getElementById('m-birth').innerText = data.birth;
+            document.getElementById('m-addr').innerText = data.address;
+            document.getElementById('m-bio').innerText = data.heritage;
             document.getElementById('m-long-bio').innerText = data.heritage_detail || data.heritage;
+            
+            document.getElementById('t-self').innerText = data.name;
             document.getElementById('t-parents').innerText = `父/母：${data.rel_parents || '未详'}`;
             document.getElementById('t-children').innerText = `子女：${data.rel_children || '未详'}`;
 
-            // 根据身份逻辑切换装饰水印
-            const bg = document.getElementById('dynamic-bg');
-            const bg2 = document.getElementById('dynamic-bg-2');
-            if (data.name.includes('振邦')) { bg.classList.add('style-calligraphy'); bg2.classList.add('style-calligraphy'); }
-            else if (data.name.includes('远山')) { bg.classList.add('style-circuit'); bg2.classList.add('style-circuit'); }
-            else if (data.name.includes('苏然')) { bg.classList.add('style-code'); bg2.classList.add('style-code'); }
-            else { bg.classList.add('style-art'); bg2.classList.add('style-art'); }
+            // 背景装饰逻辑：如果是林振邦，加书法水印；如果是林远山，加电路水印
+            const bg = document.getElementById('bg-marker');
+            if (data.name.includes('振邦')) {
+                bg.classList.add('watermark-calligraphy');
+            } else if (data.name.includes('远山')) {
+                bg.classList.add('watermark-circuit');
+            }
         }
     }
-    window.onload = loadData;
+    window.onload = init;
 </script>
 </body>
 </html>
