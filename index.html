@@ -92,26 +92,28 @@
 <audio id="nfcSound" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3" preload="auto"></audio>
 
 <script>
-    // 确保没有多余的冒号或斜杠
-    const SB_URL = 'https://lmaxmseuuscjhnmcbdgq.supabase.co'; 
-    // 请确认这是在 API Settings 里复制的那个很长的 Anon Key
-    const SB_KEY = 'sb_publishable_SLrEiNjvlJEfNNt-DrZ6NQ_XfYwfdqL'; 
+  <script>
+    // 1. 配置信息：确保这里没有多余的符号
+    const SB_URL = 'https://lmaxmseuuscjhnmcbdgq.supabase.co';
+    const SB_KEY = 'sb_publishable_SLrEiNjvlJEfNNt-DrZ6NQ_XfYwfdqL';
 
-    let mySupabase; // 使用不同名称避开冲突
+    // 2. 关键修正：使用 mySupabase 避免与全局变量冲突
+    let mySupabase;
 
     async function loadData() {
+        // 检查库是否成功加载
         if (typeof supabase === 'undefined') {
-            console.error("Supabase 库未成功加载，请检查 CDN 链接");
+            console.error("Supabase 库未加载");
             return;
         }
 
         // 初始化客户端
         mySupabase = supabase.createClient(SB_URL, SB_KEY);
 
-        // 获取 URL 中的 ID 参数
+        // 获取当前 URL 的 ID 参数 (例如 index.html?id=1)
         const mid = new URLSearchParams(window.location.search).get('id') || 1;
 
-        // 从 family_members 表中读取数据
+        // 从 family_members 表读取数据
         const { data, error } = await mySupabase
             .from('family_members')
             .select('*')
@@ -119,29 +121,35 @@
             .single();
 
         if (error) {
-            console.error("连接数据库失败:", error.message);
-            document.getElementById('loading-screen').innerText = "网络连接失败，请刷新重试";
+            console.error("数据库连接错误:", error.message);
+            document.getElementById('loading-screen').innerText = "加载失败：" + error.message;
             return;
         }
 
         if (data) {
-            // 💡 重点：根据你的截图，这里必须用英文列名
-            document.getElementById('ui-name').innerText = data.name || '未填';
-            document.getElementById('ui-birth').innerText = data.birth || '未填';
-            // 如果你没有 address 和 phone 列，请先在数据库添加，或对应正确的列名
-            document.getElementById('ui-addr').innerText = data.address || '暂无地址';
-            document.getElementById('ui-phone').innerText = data.phone || '暂无电话';
-            document.getElementById('ui-bio').innerText = data.heritage || '暂无详细记载';
+            console.log("获取到的数据:", data);
 
-            // 成功后显示界面
+            // 3. 对应你的数据库列名进行填充
+            document.getElementById('ui-name').innerText = data.name || '未命名';
+            document.getElementById('ui-birth').innerText = data.birth || '未知日期';
+            document.getElementById('ui-bio').innerText = data.heritage || '暂无详细记载';
+            
+            // 如果你数据库里没有 address 和 phone 列，可以暂时用固定文字或在数据库添加
+            document.getElementById('ui-addr').innerText = data.address || '江苏省苏州市'; 
+            document.getElementById('ui-phone').innerText = data.phone || '0512-xxxx-xxxx';
+
+            // 4. 界面展示切换
             document.getElementById('loading-screen').style.display = 'none';
             document.getElementById('main-app').style.display = 'block';
             
-            // 初始化滑块
-            new Swiper(".mySwiper", { grabCursor: true });
+            // 初始化滑块组件
+            setTimeout(() => {
+                new Swiper(".mySwiper", { grabCursor: true });
+            }, 100);
         }
     }
 
+    // 页面加载完成后启动
     window.onload = loadData;
 </script>
 
