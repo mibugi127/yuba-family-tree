@@ -3,176 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家族传承 - 精装族谱</title>
+    <title>林氏家族传承志</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&display=swap" rel="stylesheet">
     
     <style>
-        :root {
-            --primary-red: #8B0000;
-            --gold: #C8A97E;
-            --paper: #FDFBF7;
-        }
-
-        body {
-            background-color: #EAE0D5;
-            background-image: url('https://www.transparenttextures.com/patterns/rice-paper.png');
-            font-family: 'STKaiti', 'KaiTi', 'PingFang SC', serif;
-            margin: 0; padding: 0;
-            display: flex; justify-content: center; align-items: center; min-height: 100vh;
-        }
-
-        /* 翻页容器 */
-        .swiper { width: 100%; max-width: 400px; height: 92vh; }
-
-        .profile-card {
-            background: var(--paper);
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-            border: 1px solid rgba(200, 169, 126, 0.3);
-            height: 100%; display: flex; flex-direction: column; position: relative;
-        }
-
-        /* 装饰条 */
-        .header-bar { height: 8px; background: linear-gradient(90deg, var(--primary-red), var(--gold), var(--primary-red)); }
-
-        /* --- 第一页：身份志 --- */
-        .page-one-content { padding: 30px 20px; text-align: center; flex-grow: 1; }
-        .avatar-wrap {
-            width: 130px; height: 130px; margin: 0 auto 15px; padding: 6px;
-            border: 1px solid var(--gold); border-radius: 50%; position: relative;
-        }
-        .avatar-wrap img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-
-        .name { font-size: 32px; font-weight: bold; color: var(--primary-red); margin: 0; letter-spacing: 3px; }
-        .meta { font-size: 14px; color: #666; margin: 8px 0 20px; }
-
-        .info-box { background: rgba(200, 169, 126, 0.1); border-radius: 12px; padding: 15px; text-align: left; margin-bottom: 15px;}
-        .info-row { display: flex; margin-bottom: 8px; font-size: 14px; }
-        .info-row b { color: var(--primary-red); width: 50px; }
-        
-        .short-bio { font-size: 15px; line-height: 1.8; color: #444; text-align: justify; padding: 0 10px; border-left: 2px solid var(--gold); }
-
-        /* --- 第二页：传承与系谱 --- */
-        .page-two-content { padding: 25px; overflow-y: auto; flex-grow: 1; }
-        .section-title { font-size: 16px; color: var(--primary-red); font-weight: bold; margin: 20px 0 15px; border-bottom: 1px solid var(--gold); padding-bottom: 5px;}
-
-        /* 系谱树样式 */
-        .kinship-tree { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 20px; }
-        .node { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--gold); font-size: 13px; background: #fff; min-width: 90px; text-align: center; }
-        .node-main { background: var(--primary-red); color: white; border: none; font-weight: bold; }
-        .line { width: 1px; height: 10px; background: var(--gold); }
-
-        /* 引导提示 */
-        .hint { text-align: center; font-size: 12px; color: var(--gold); padding: 15px 0; animation: bounce 2s infinite; }
-        @keyframes bounce { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(10px); } }
-
-        #loader { color: var(--primary-red); font-size: 18px; letter-spacing: 2px; }
+        :root { --red: #8B0000; --gold: #C8A97E; --paper: #FDFBF7; }
+        body { background: #EAE0D5; margin: 0; font-family: 'PingFang SC', serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        #loading-screen { color: var(--red); font-size: 18px; font-weight: bold; }
+        .swiper { width: 100%; max-width: 400px; height: 90vh; display: none; }
+        .profile-card { background: var(--paper); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); height: 100%; overflow: hidden; position: relative; border: 1px solid rgba(200, 169, 126, 0.4); display: flex; flex-direction: column; }
+        .content { padding: 30px 20px; flex: 1; display: flex; flex-direction: column; position: relative; z-index: 1; }
+        .photo-frame { width: 140px; height: 140px; margin: 0 auto 15px; padding: 5px; border: 2px solid var(--gold); border-radius: 50%; background: #fff; }
+        .photo-frame img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .name { font-family: 'Noto Serif SC', serif; font-size: 38px; color: var(--red); text-align: center; letter-spacing: 6px; margin: 5px 0; }
+        .info-panel { background: rgba(139,0,0,0.04); border-radius: 12px; padding: 15px; border-left: 5px solid var(--red); margin-top: 20px; }
+        .info-panel p { margin: 10px 0; font-size: 15px; color: #333; line-height: 1.6; }
+        .hint { margin-top: auto; text-align: center; font-size: 13px; color: var(--gold); padding-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="loader">正在开启宣纸卷轴...</div>
+<div id="loading-screen">正在开启林氏卷轴...</div>
 
-    <div class="swiper mySwiper" id="main-container" style="display: none;">
-        <div class="swiper-wrapper">
-            <div class="swiper-slide">
-                <div class="profile-card">
-                    <div class="header-bar"></div>
-                    <div class="page-one-content">
-                        <div class="avatar-wrap"><img id="p1-photo" src=""></div>
-                        <h1 class="name" id="p1-name">---</h1>
-                        <div class="meta" id="p1-meta">---</div>
-                        <div class="info-box">
-                            <div class="info-row"><b>居所</b> <span id="p1-addr">---</span></div>
-                            <div class="info-row"><b>传书</b> <span id="p1-phone">---</span></div>
-                        </div>
-                        <div class="short-bio" id="p1-bio">---</div>
+<div class="swiper mySwiper" id="main-app">
+    <div class="swiper-wrapper">
+        <div class="swiper-slide">
+            <div class="profile-card">
+                <div class="content">
+                    <div class="photo-frame"><img id="ui-photo" src="https://via.placeholder.com/150"></div>
+                    <h1 class="name" id="ui-name">加载中</h1>
+                    <div class="info-panel">
+                        <p><b>出生日期：</b><span id="ui-birth"></span></p>
+                        <p><b>家族住址：</b><span id="ui-addr"></span></p>
+                        <p><b>联系方式：</b><span id="ui-phone"></span></p>
                     </div>
-                    <div class="hint">左滑翻阅传承志 ➔</div>
-                </div>
-            </div>
-
-            <div class="swiper-slide">
-                <div class="profile-card">
-                    <div class="header-bar"></div>
-                    <div class="page-two-content">
-                        <div class="section-title">🌳 系谱亲缘</div>
-                        <div class="kinship-tree">
-                            <div class="node" id="tree-parents">父/母：未详</div>
-                            <div class="line"></div>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <div class="node node-main" id="tree-self">本人</div>
-                                <div style="width: 20px; height: 1px; background: var(--gold);"></div>
-                                <div class="node" id="tree-spouse">配偶：未详</div>
-                            </div>
-                            <div class="line"></div>
-                            <div class="node" id="tree-children">子女：未详</div>
-                        </div>
-
-                        <div class="section-title">📜 详细传承志</div>
-                        <div style="font-size: 15px; line-height: 2; color: #555; text-indent: 2em; text-align: justify;" id="p2-detail">
-                            记载载入中...
-                        </div>
-                    </div>
-                    <div class="hint" style="animation: none;">☚ 右滑返回</div>
+                    <div class="hint">左滑翻阅生平事迹 ➔</div>
                 </div>
             </div>
         </div>
-        <div class="swiper-pagination"></div>
+        <div class="swiper-slide">
+            <div class="profile-card">
+                <div class="content">
+                    <h2 style="color:var(--red); border-bottom:1px solid var(--gold); padding-bottom:10px;">📜 生平事迹</h2>
+                    <div id="ui-bio" style="font-size: 16px; line-height: 2; color:#444; overflow-y: auto; text-indent: 2em; padding-top:15px;"></div>
+                </div>
+            </div>
+        </div>
     </div>
+</div>
 
-    <audio id="flipSound" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3" preload="auto"></audio>
+<script>
+    // 1. 请务必在这里填入你自己的 ANON_KEY
+    const SB_URL = 'https://lmaxmseuuscjhnmcbdgq.supabase.co';
+    const SB_KEY = 'sb_publishable_SLrEiNjvlJEfNNt-DrZ6NQ_XfYwfdqL'; 
 
-    <script>
-        // 配置
-        const SUPABASE_URL ='https://lmaxmseuuscjhnmcbdgq.supabase.co';
-        const SUPABASE_KEY ='sb_publishable_SLrEiNjvlJEfNNt-DrZ6NQ_XfYwfdqL'; 
-        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const mid = new URLSearchParams(window.location.search).get('id') || 1;
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const mid = Number(urlParams.get('id')) || 1;
+    async function loadData() {
+        if (!window.supabase) {
+            console.error("Supabase 库未加载");
+            return;
+        }
+        const client = window.supabase.createClient(SB_URL, SB_KEY);
 
-        // 初始化滑动
-        const swiper = new Swiper(".mySwiper", {
-            pagination: { el: ".swiper-pagination", clickable: true },
-            on: { slideChange: () => { playSound(); } }
-        });
+        // 2. 注意这里：我们直接使用你截图里的中文列名！
+        const { data, error } = await client
+            .from('family_members')
+            .select('*')
+            .eq('id', mid)
+            .single();
 
-        function playSound() {
-            const audio = document.getElementById('flipSound');
-            audio.currentTime = 0; // 每次翻页重置时间，确保连翻也能响
-            audio.play().catch(() => {});
+        if (error) {
+            console.error("数据抓取失败:", error.message);
+            document.getElementById('loading-screen').innerText = "读取失败，请检查 Key 或网络";
+            return;
         }
 
-        async function load() {
-            const { data, error } = await mySupabase.from('family_members').select('*').eq('id', mid).single();
-            if (data) {
-                // 第一页
-                document.getElementById('p1-name').innerText = data.name;
-                document.getElementById('p1-photo').src = data.photo_url || 'https://via.placeholder.com/150';
-                document.getElementById('p1-meta').innerText = `${data.age}岁 | 生于 ${data.birth}`;
-                document.getElementById('p1-addr').innerText = data.address;
-                document.getElementById('p1-phone').innerText = data['telephone number'];
-                document.getElementById('p1-bio').innerText = data.heritage;
+        if (data) {
+            // 3. 这里的 ['姓名'] 等必须和你数据库里的一模一样
+            document.getElementById('ui-name').innerText = data['姓名'] || '未填';
+            document.getElementById('ui-birth').innerText = data['出生日期'] || '未填';
+            document.getElementById('ui-addr').innerText = data['住址'] || '未填';
+            document.getElementById('ui-phone').innerText = data['电话号码'] || '未填';
+            document.getElementById('ui-bio').innerText = data['生平事迹'] || '暂无事迹记载';
+            
+            // 如果你数据库里有'照片'这一列，就取消下面这行的注释
+            // if (data['照片']) document.getElementById('ui-photo').src = data['照片'];
 
-                // 第二页详情
-                document.getElementById('p2-detail').innerText = data.heritage_detail || data.heritage;
-                
-                // 系谱树填充
-                document.getElementById('tree-self').innerText = data.name;
-                document.getElementById('tree-parents').innerText = `父/母：${data.rel_parents || '未详'}`;
-                document.getElementById('tree-spouse').innerText = `配偶：${data.rel_spouse || '未详'}`;
-                document.getElementById('tree-children').innerText = `子女：${data.rel_children || '未详'}`;
-
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('main-container').style.display = 'block';
-                playSound(); // 初始打开响一声
-            }
+            // 加载完成后显示内容并初始化翻页效果
+            document.getElementById('loading-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            
+            new Swiper(".mySwiper", { 
+                effect: "slide",
+                grabCursor: true 
+            });
         }
+    }
 
-        window.onload = load;
-    </script>
+    window.onload = loadData;
+</script>
 </body>
 </html>
