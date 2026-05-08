@@ -3,74 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>林氏家族传承志</title>
+    <title>家族传承 - 翻阅族谱</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&display=swap" rel="stylesheet">
     
     <style>
-        :root { --red: #8B0000; --gold: #C8A97E; --paper: #FDFBF7; }
-        body { background: #EAE0D5; margin: 0; font-family: 'PingFang SC', serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        #loading-screen { color: var(--red); font-size: 18px; font-weight: bold; }
-        .swiper { width: 100%; max-width: 400px; height: 90vh; display: none; }
-        .profile-card { background: var(--paper); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); height: 100%; overflow: hidden; position: relative; border: 1px solid rgba(200, 169, 126, 0.4); display: flex; flex-direction: column; }
-        .content { padding: 30px 20px; flex: 1; display: flex; flex-direction: column; position: relative; z-index: 1; }
-        .photo-frame { width: 140px; height: 140px; margin: 0 auto 15px; padding: 5px; border: 2px solid var(--gold); border-radius: 50%; background: #fff; }
-        .photo-frame img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-        .name { font-family: 'Noto Serif SC', serif; font-size: 38px; color: var(--red); text-align: center; letter-spacing: 6px; margin: 5px 0; }
-        .info-panel { background: rgba(139,0,0,0.04); border-radius: 12px; padding: 15px; border-left: 5px solid var(--red); margin-top: 20px; }
-        .info-panel p { margin: 10px 0; font-size: 15px; color: #333; line-height: 1.6; }
-        .hint { margin-top: auto; text-align: center; font-size: 13px; color: var(--gold); padding-bottom: 10px; }
+        body { 
+            background-color: #FDFBF7; 
+            background-image: url('https://www.transparenttextures.com/patterns/rice-paper.png'); 
+            font-family: 'STKaiti', 'KaiTi', 'PingFang SC', serif;
+            margin: 0; padding: 0; 
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+
+        /* 翻页容器大小 */
+        .swiper { width: 100%; max-width: 420px; height: 90vh; }
+
+        /* 单个卡片样式 */
+        .profile-card { 
+            background: #FFFFFF; border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(139, 0, 0, 0.08);
+            border: 1px solid #EAE0D5; overflow: hidden;
+            height: 100%; display: flex; flex-direction: column;
+        }
+
+        .header-bg { background: #8B0000; height: 30px; width: 100%; }
+        
+        /* 第一页特有样式 */
+        .avatar-container { 
+            margin: -20px auto 10px; width: 120px; height: 120px; 
+            padding: 5px; border: 2px dashed #C8A97E; border-radius: 50%; background: #fff;
+        }
+        .avatar-container img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+
+        .name { font-size: 28px; color: #8B0000; margin: 5px 0; font-weight: bold; text-align:center; }
+        .info-section { background: rgba(250, 250, 248, 0.8); padding: 15px; margin: 10px 20px; border-radius: 10px; border: 1px solid #eee; }
+        .label { color: #8B0000; font-weight: bold; margin-right: 8px; }
+        .page-hint { text-align: center; font-size: 12px; color: #C8A97E; margin-top: auto; padding-bottom: 20px; animation: bounce 2s infinite; }
+
+        /* 第二页：传承志详情 */
+        .detail-page { padding: 30px 25px; text-align: justify; line-height: 2; color: #444; font-size: 17px; }
+        .detail-title { border-bottom: 2px solid #8B0000; display: inline-block; padding-bottom: 5px; margin-bottom: 20px; color: #8B0000; font-weight: bold; }
+
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateX(0);} 40% {transform: translateX(-5px);} 60% {transform: translateX(5px);} }
     </style>
 </head>
 <body>
 
-<div id="loading-screen">正在开启家族卷轴...</div>
+<div id="loading" style="color: #8B0000;">开启卷轴...</div>
 
-<div class="swiper mySwiper" id="main-app">
+<div class="swiper mySwiper" id="main-container" style="display: none;">
     <div class="swiper-wrapper">
         <div class="swiper-slide">
             <div class="profile-card">
-                <div class="content">
-                    <div class="photo-frame"><img id="ui-photo" src="https://via.placeholder.com/150"></div>
-                    <h1 class="name" id="ui-name">加载中</h1>
-                    <div class="info-panel">
-                        <p><b>出生日期：</b><span id="ui-birth"></span></p>
-                        <p><b>家族住址：</b><span id="ui-addr"></span></p>
-                        <p><b>联系方式：</b><span id="ui-phone"></span></p>
-                    </div>
-                    <div class="hint">左滑翻阅生平事迹 ➔</div>
+                <div class="header-bg"></div>
+                <div class="avatar-container"><img id="m-photo" src=""></div>
+                <h1 class="name" id="m-name"></h1>
+                <div style="text-align:center; color:#888; font-size:14px;" id="m-birth"></div>
+                
+                <div class="info-section">
+                    <div><span class="label">居所:</span><span id="m-addr"></span></div>
+                    <div style="margin-top:8px;"><span class="label">传书:</span><span id="m-phone"></span></div>
                 </div>
+
+                <div class="info-section">
+                    <div class="label" style="margin-bottom:5px;">生平简述</div>
+                    <div id="m-heritage" style="text-indent: 2em;"></div>
+                </div>
+                <div class="page-hint">左滑翻阅传承志 ➔</div>
             </div>
         </div>
+
         <div class="swiper-slide">
             <div class="profile-card">
-                <div class="content">
-                    <h2 style="color:var(--red); border-bottom:1px solid var(--gold); padding-bottom:10px;">📜 生平事迹</h2>
-                    <div id="ui-bio" style="font-size: 16px; line-height: 2; color:#444; overflow-y: auto; text-indent: 2em; padding-top:15px;"></div>
+                <div class="header-bg"></div>
+                <div class="detail-page">
+                    <div class="detail-title">📜 家族传承志</div>
+                    <div id="m-detail" style="text-indent: 2em;">暂无详细记载。</div>
                 </div>
+                <div class="page-hint" style="animation: none;">☚ 右滑返回首页</div>
             </div>
         </div>
     </div>
+    <div class="swiper-pagination"></div>
 </div>
 
+<audio id="nfcSound" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3" preload="auto"></audio>
+
 <script>
-    // 1. 核心配置：请务必确保 URL 末尾没有多余的冒号或斜杠
-    const SB_URL = 'https://lmaxmseuuscjhnmcbdgq.supabase.co';
-    // ⚠️ 请在这里粘贴你从 Supabase 后台复制的那个超长 Anon Key
-    const SB_KEY = 'sb_publishable_SLrEiNjvlJEfNNt-DrZ6NQ_XfYwfdqL'; 
+    const SUPABASE_URL = 'https://lmaxmseuuscjhnmcbdgq.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_SLrEiNjvlJEfNNt-DrZ6NQ_XfYwfdqL'; 
+    const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 💡 关键修正：使用 mySupabase 避免与库自带的 supabase 变量冲突
-    let mySupabase;
+    const urlParams = new URLSearchParams(window.location.search);
+    const memberId = Number(urlParams.get('id')) || 1;
 
-    async function loadData() {
-        // A. 检查库是否正确加载
-        if (typeof supabase === 'undefined') {
-            console.error("Supabase 库未成功加载，请检查网络或 CDN 链接");
-            document.getElementById('loading-screen').innerText = "加载失败：库未就绪";
-            return;
+    // 初始化滑动效果
+    const swiper = new Swiper(".mySwiper", {
+        effect: "slide",
+        pagination: { el: ".swiper-pagination", clickable: true },
+        on: { slideChange: function() { playSound(); } } // 翻页时响一声
+    });
+
+    function playSound() {
+        const audio = document.getElementById('nfcSound');
+        audio.play().catch(()=>{});
+    }
+
+    async function fetchData() {
+        const { data, error } = await mySupabase.from('family_members').select('*').eq('id', memberId).single();
+        if (data) {
+            document.getElementById('m-name').innerText = data.name;
+            document.getElementById('m-photo').src = data.photo_url || 'https://via.placeholder.com/150';
+            document.getElementById('m-birth').innerText = `寿享 ${data.age} 载 | 生于 ${data.birth}`;
+            document.getElementById('m-addr').innerText = data.address;
+            document.getElementById('m-phone').innerText = data['telephone number'];
+            document.getElementById('m-heritage').innerText = data.heritage;
+            
+            // 如果你在数据库加了新列，这里可以读取新列
+            if(data.heritage_detail) {
+                document.getElementById('m-detail').innerText = data.heritage_detail;
+            } else {
+                // 如果没加新列，就把原本的 heritage 复制一份到第二页展示
+                document.getElementById('m-detail').innerText = data.heritage;
+            }
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('main-container').style.display = 'block';
+            playSound();
         }
+    }
 
-        // B. 初始化客户端（注意这里前面不加 const 或 let）
-        mySup
+    window.onload = fetchData;
+</script>
+</body>
+</html>
